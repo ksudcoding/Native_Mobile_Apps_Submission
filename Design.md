@@ -1,4 +1,4 @@
-<img width="387" height="200" alt="Group 18" src="https://github.com/user-attachments/assets/1722d473-3fce-494a-abdd-485a462cfd8a" />
+
 
 App Overview
 
@@ -38,7 +38,7 @@ The List of images are from https://www.pexels.com and https://www.vecteezy.com,
 
 Orientation Wireframes: 
 The app has two screens, TimeInputScreen and TimerScreen both work with scaling and also keeps the elements inline when the screen is flipped. The scrollable containers fit the compact viewports cleanly.
-
+<img width="387" height="200" alt="Group 18" src="https://github.com/user-attachments/assets/1722d473-3fce-494a-abdd-485a462cfd8a" />
 Compose UI Structure: 
 TimeInputScreen uses a vertical Column, a card displays the live API quotes, an OutlinedTextField for the minute input and an AlertDialog for the study time stats.
 
