@@ -1,3 +1,5 @@
+<img width="387" height="200" alt="Group 18" src="https://github.com/user-attachments/assets/1722d473-3fce-494a-abdd-485a462cfd8a" />
+
 App Overview
 
 Name: Kyle Sutherland
