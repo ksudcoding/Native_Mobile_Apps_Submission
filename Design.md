@@ -7,30 +7,12 @@ Student ID: 2506252
 
 The application’s name is Study Timer 101, the must requirements that my app has are:
 
-“The app has a single screen with a simple and clean user interface.” - The app had a simple layout with buttons that are explained clearly, all buttons are labelled with the correct information.
-
-“The UI includes at least one widget presenting information to the user, and one interactive widget, such as a button or an input text field.” - The main screen of the app has a number input field where you can put a number from 1 to 60 mins, this is your study time.
-
-“The app responds to user interactions. For example, clicking a button should trigger a simple action like displaying a message or changing the text on the screen.” - When clicking the total study time button, it pops up with an AlertDialog message, which displays infomation.
-
-“The app maintains its state during configuration changes (e.g., screen rotations).” - Yes, when the screen is flipped the buttons and ui move in the correct places and the page stays on the correct page.
-
-“One of the screens includes a list of items using, for example, a LazyColumn.” - The List of images in the background are in a lazy column which scrolls slowing in the background.
-
-“The list should be populated with data loaded from the internet or any other source.” - 
-The List of images are from https://www.pexels.com and https://www.vecteezy.com, both websites which offer copyright free images for use.
-
-
-“The app should include use of ViewModels, UI State, and StateFlow in accordance with Android Architecture Components to enhance maintainability and scalability”
-- The MainActivity, StudyUiState, StudyViewModel and QuoteApiService are all used to keep the code in line within accordance with android Architecture components to enhance maintainability scalability.
-
-“The app includes at least two screens, with navigation between them. This could be achieved using Android’s Navigation Component or explicit intents.” - The app have 2 navigation screens, TimerScreen and TimeInputScreen. both can be accessed with buttons on both screens, The timerscreen has one in the bottom corner and TimeInputScreen has the start timer button widget to change pages if the conditions are met.
-
-“Each screen includes a mixture of informative and interactive widgets.” - Both screens have text and interactive widgets.
-
-“The app sends or loads data from the internet, using that data within the apps core functionality.” - The App is using https://dummyjson.com/quotes/ to grab the quotes and display them above the number input. 
-
-“The app gracefully handles errors, such as failed network requests or empty data, and provides feedback to the user.” - If there is no internet then their will be backup quotes that will be displayed. If the app has in input that is empty or exceeds the limit of 60 inside the input.
+* **Clean UI & Interactive Controls (Must 1 & 2):** Features a straightforward interface with clearly labeled buttons, a 1–60 minute numeric input field, and a **Total Study Time** button that opens an informational `AlertDialog`.
+* **Configuration Change Resilience (Must 3):** Retains the active screen and countdown state seamlessly across screen rotations.
+* **Dynamic Background List (Should 1):** Displays a slow-scrolling background `LazyColumn` populated with royalty-free study imagery sourced from Pexels and Vecteezy.
+* **MVVM Architecture (Should 2):** Uses `MainActivity`, `StudyViewModel`, and `StudyUiState` with `StateFlow` to separate UI rendering from business logic.
+* **Multi-Screen Navigation (Should 3):** Supports switching between `TimeInputScreen` and `TimerScreen`, each combining informational text and interactive controls.
+* **Live API Integration & Error Handling (Should 4 & 5):** Fetches motivational quotes from DummyJSON via Retrofit (`QuoteApiService`), falling back to local quotes when offline and validating inputs outside the 1–60 minute limit.
 
 
 8 UI/UX Design & The View Layer
