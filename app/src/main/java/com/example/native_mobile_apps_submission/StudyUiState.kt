@@ -1,5 +1,9 @@
 package com.example.native_mobile_apps_submission
 
+/**
+ * Immutable UI state snapshot representing the current state of Study Timer 101.
+ * Exposed as a StateFlow by [StudyViewModel] and observed by Compose screens.
+ */
 data class StudyUiState(
     val selectedTimeMillis: Long? = null,
     val minutesInput: String = "",

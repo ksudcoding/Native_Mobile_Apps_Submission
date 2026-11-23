@@ -45,7 +45,12 @@ import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin
 
+/**
+ * Entry point activity for Study Timer 101.
+ * Hosts the [StudyViewModel] and mounts the root Jetpack Compose UI.
+ */
 class MainActivity : ComponentActivity() {
+    // ViewModel survives configuration changes (such as screen rotations)
     private val studyViewModel: StudyViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,6 +66,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Top-level composable container for the app.
+ * Observes [StudyUiState], renders the shared background and header, and sets up
+ * Navigation Compose routes between [TimeInputScreen] and [TimerScreen].
+ */
 @Composable
 fun StudyAppRoot(viewModel: StudyViewModel) {
     val navController = rememberNavController()
@@ -72,14 +82,17 @@ fun StudyAppRoot(viewModel: StudyViewModel) {
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize()
     ) {
+        // Shared slow-scrolling background layer behind active screens
         AutoScrollingNatureBackground()
 
+        // Dark scrim to keep foreground text and controls legible
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.55f))
         )
 
+        // Persistent app title positioned according to screen orientation
         Text(
             text = "STUDY TIMER 101",
             fontSize = 20.sp,
@@ -91,6 +104,7 @@ fun StudyAppRoot(viewModel: StudyViewModel) {
                 .padding(top = if (isLandscape) 16.dp else 105.dp)
         )
 
+        // Navigation graph managing transitions between setup and active timer views
         NavHost(
             navController = navController,
             startDestination = "time_input",
@@ -102,6 +116,7 @@ fun StudyAppRoot(viewModel: StudyViewModel) {
                     onInputChanged = { viewModel.onMinutesInputChanged(it) },
                     onConfirm = {
                         viewModel.confirmAndStartTimer()
+                        // Only navigate when input validation succeeds and a timer duration is set
                         if (viewModel.uiState.value.selectedTimeMillis != null) {
                             navController.navigate("timer") {
                                 launchSingleTop = true
@@ -121,6 +136,7 @@ fun StudyAppRoot(viewModel: StudyViewModel) {
                     onToggleMute = { viewModel.toggleMute() },
                     onBackToSetup = {
                         viewModel.backToSetup()
+                        // Pop back to the input route, or navigate explicitly if needed
                         val popped = navController.popBackStack("time_input", inclusive = false)
                         if (!popped) {
                             navController.navigate("time_input") {
@@ -135,10 +151,15 @@ fun StudyAppRoot(viewModel: StudyViewModel) {
     }
 }
 
+/**
+ * Renders a slow auto-scrolling [LazyColumn] of calm nature images from external URLs
+ * to provide subtle ambient motion behind the UI.
+ */
 @Composable
 fun AutoScrollingNatureBackground() {
     val listState = rememberLazyListState()
 
+    // Continuously steps the list scroll offset and loops back near the end
     LaunchedEffect(Unit) {
         while (true) {
             delay(60L)
@@ -174,6 +195,11 @@ fun AutoScrollingNatureBackground() {
     }
 }
 
+/**
+ * Setup screen where users read a motivational quote, enter a study duration (1–60 minutes),
+ * start the timer, or open a dialog displaying cumulative study time.
+ * Adapts layout between portrait (vertical column) and landscape (side-by-side row).
+ */
 @Composable
 fun TimeInputScreen(
     uiState: StudyUiState,
@@ -187,6 +213,7 @@ fun TimeInputScreen(
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     if (isLandscape) {
+        // Horizontal two-column layout suited to landscape screens
         Row(
             modifier = Modifier
                 .padding(24.dp)
@@ -195,6 +222,7 @@ fun TimeInputScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Left pane: motivational quote card
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -232,6 +260,7 @@ fun TimeInputScreen(
                 }
             }
 
+            // Right pane: duration input, validation feedback, and action buttons
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -263,6 +292,7 @@ fun TimeInputScreen(
                     )
                 )
 
+                // Displays validation or range errors from StudyViewModel
                 if (uiState.errorMessage != null) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(text = uiState.errorMessage, color = Color.Red, fontSize = 13.sp)
@@ -287,6 +317,7 @@ fun TimeInputScreen(
             }
         }
     } else {
+        // Vertical stacked layout for portrait orientation
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -382,6 +413,7 @@ fun TimeInputScreen(
         }
     }
 
+    // Dialog showing total accumulated study minutes/hours with an option to reset history
     if (uiState.showStatsDialog) {
         val totalMinutes = uiState.totalStudiedMillis / (1000 * 60)
         val totalHours = totalMinutes / 60
@@ -417,6 +449,11 @@ fun TimeInputScreen(
     }
 }
 
+/**
+ * Active countdown screen displaying a custom [Canvas] progress arc, remaining seconds,
+ * timer playback controls (Start / Pause / Restart), mute toggle, background raw audio playback,
+ * and a button to return to the setup screen.
+ */
 @Composable
 fun TimerScreen(
     uiState: StudyUiState,
@@ -427,10 +464,14 @@ fun TimerScreen(
     val context = LocalContext.current
     var size by remember { mutableStateOf(IntSize.Zero) }
 
+    // MediaPlayer and shuffled raw resource playlist state for ambient study audio
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
     var shuffledPlaylist by remember { mutableStateOf<List<Int>>(emptyList()) }
     var currentTrackIndex by remember { mutableStateOf(0) }
 
+    /**
+     * Builds a shuffled list of raw audio resource IDs if empty and starts playing the next track.
+     */
     fun playNextTrackInShuffle() {
         if (shuffledPlaylist.isEmpty()) {
             val rawFields = R.raw::class.java.fields
@@ -459,12 +500,14 @@ fun TimerScreen(
         }
     }
 
+    // Releases MediaPlayer resources when TimerScreen leaves composition
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer?.release()
         }
     }
 
+    // Syncs audio playback with whether the countdown timer is actively running
     LaunchedEffect(uiState.isTimerRunning) {
         if (uiState.isTimerRunning) {
             if (mediaPlayer == null || shuffledPlaylist.isEmpty()) {
@@ -477,6 +520,7 @@ fun TimerScreen(
         }
     }
 
+    // Updates MediaPlayer volume whenever mute state changes
     LaunchedEffect(uiState.isMuted) {
         val vol = if (uiState.isMuted) 0f else 1f
         mediaPlayer?.setVolume(vol, vol)
@@ -490,11 +534,13 @@ fun TimerScreen(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize()
     ) {
+        // Circular countdown gauge and remaining time readout
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.size(200.dp).onSizeChanged { size = it }
         ) {
             Canvas(modifier = Modifier.size(200.dp)) {
+                // Background track arc
                 drawArc(
                     color = Color.DarkGray,
                     startAngle = -215f,
@@ -504,6 +550,7 @@ fun TimerScreen(
                     style = Stroke(strokeWidth.toPx(), cap = StrokeCap.Round)
                 )
 
+                // Active progress arc transitioning from red to green as remaining time increases
                 val dynamicActiveColor = lerp(Color.Red, Color.Green, progressValue.coerceIn(0f, 1f))
 
                 drawArc(
@@ -515,6 +562,7 @@ fun TimerScreen(
                     style = Stroke(strokeWidth.toPx(), cap = StrokeCap.Round)
                 )
 
+                // Indicator dot positioned at the current sweep tip along the arc
                 val center = Offset(size.width / 2f, size.height / 2f)
                 val beta = (250f * progressValue.coerceIn(0f, 1f) + 145f) * (Math.PI / 180f).toFloat()
                 val r = size.width / 2f
@@ -536,6 +584,7 @@ fun TimerScreen(
             )
         }
 
+        // Primary timer control button (Pause while running, Start when paused, Restart when finished)
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
@@ -558,6 +607,7 @@ fun TimerScreen(
             }
         }
 
+        // Bottom-left mute/unmute toggle for study audio
         IconButton(
             onClick = onToggleMute,
             modifier = Modifier
@@ -570,6 +620,7 @@ fun TimerScreen(
             )
         }
 
+        // Bottom-right exit control: stops audio, logs elapsed study time, and returns to setup
         IconButton(
             onClick = {
                 mediaPlayer?.stop()

@@ -12,13 +12,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel for Study Timer 101 following Unidirectional Data Flow (UDF).
+ * Manages timer countdown coroutines, 1–60 minute input validation, remote quote fetching
+ * with fallback handling, and persistent total study time via SharedPreferences.
+ */
 class StudyViewModel(application: Application) : AndroidViewModel(application) {
 
+    // Local preferences store for persisting cumulative study time across sessions
     private val prefs = application.getSharedPreferences("StudyPrefs", Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(StudyUiState())
     val uiState: StateFlow<StudyUiState> = _uiState.asStateFlow()
 
+    // Active coroutine job driving the 100ms countdown loop
     private var timerJob: Job? = null
 
     init {
@@ -26,11 +33,18 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
         fetchMotivationalQuote()
     }
 
+    /**
+     * Loads previously saved total study duration from SharedPreferences into [StudyUiState].
+     */
     private fun loadTotalStudiedTime() {
         val total = prefs.getLong("total_studied_millis", 0L)
         _uiState.update { it.copy(totalStudiedMillis = total) }
     }
 
+    /**
+     * Fetches a random quote from [QuoteApiService], falling back to a local study reminder
+     * if the network request fails.
+     */
     fun fetchMotivationalQuote() {
         viewModelScope.launch {
             try {
@@ -52,6 +66,9 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Adds completed or elapsed study milliseconds to SharedPreferences and updates UI state.
+     */
     private fun saveStudiedTime(elapsedMillis: Long) {
         val currentTotal = prefs.getLong("total_studied_millis", 0L)
         val newTotal = currentTotal + elapsedMillis
@@ -59,10 +76,17 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(totalStudiedMillis = newTotal) }
     }
 
+    /**
+     * Updates the raw minutes input string and clears any prior validation error.
+     */
     fun onMinutesInputChanged(input: String) {
         _uiState.update { it.copy(minutesInput = input, errorMessage = null) }
     }
 
+    /**
+     * Validates that the entered duration is between 1 and 60 minutes, configures the
+     * countdown target, and starts the timer if valid.
+     */
     fun confirmAndStartTimer() {
         val mins = _uiState.value.minutesInput.toLongOrNull()
         if (mins == null || mins <= 0) {
@@ -83,6 +107,10 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Toggles between running and paused states, resetting to the full duration if starting
+     * from a completed (0ms) timer.
+     */
     fun toggleTimer() {
         val currentState = _uiState.value
         if (currentState.isTimerRunning) {
@@ -97,6 +125,10 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Launches a coroutine that decrements [StudyUiState.currentTime] every 100ms until
+     * paused, cancelled, or finished. Saves total time upon completion.
+     */
     private fun startTimer() {
         timerJob?.cancel()
         _uiState.update { it.copy(isTimerRunning = true) }
@@ -117,15 +149,24 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Cancels the active countdown job and marks the timer as paused.
+     */
     fun pauseTimer() {
         timerJob?.cancel()
         _uiState.update { it.copy(isTimerRunning = false) }
     }
 
+    /**
+     * Flips the audio mute flag in [StudyUiState].
+     */
     fun toggleMute() {
         _uiState.update { it.copy(isMuted = !it.isMuted) }
     }
 
+    /**
+     * Opens or closes the study statistics dialog, refreshing stored totals when opened.
+     */
     fun setShowStatsDialog(show: Boolean) {
         if (show) {
             loadTotalStudiedTime()
@@ -133,11 +174,18 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(showStatsDialog = show) }
     }
 
+    /**
+     * Resets saved total study time to zero and closes the statistics dialog.
+     */
     fun clearHistory() {
         prefs.edit().putLong("total_studied_millis", 0L).apply()
         _uiState.update { it.copy(totalStudiedMillis = 0L, showStatsDialog = false) }
     }
 
+    /**
+     * Stops the active timer, records any elapsed study time from the current session,
+     * refreshes the quote, and resets timer setup fields before returning to the input screen.
+     */
     fun backToSetup() {
         timerJob?.cancel()
         val currentState = _uiState.value
