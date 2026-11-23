@@ -1,11 +1,6 @@
 package com.example.native_mobile_apps_submission
 
-
 import android.content.res.Configuration
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.Row
 import android.media.MediaPlayer
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -17,7 +12,9 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,18 +28,23 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin
-import androidx.compose.ui.tooling.preview.Preview
+
 class MainActivity : ComponentActivity() {
     private val studyViewModel: StudyViewModel by viewModels()
 
@@ -61,6 +63,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun StudyAppRoot(viewModel: StudyViewModel) {
+    val navController = rememberNavController()
     val uiState by viewModel.uiState.collectAsState()
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -77,7 +80,6 @@ fun StudyAppRoot(viewModel: StudyViewModel) {
                 .background(Color.Black.copy(alpha = 0.55f))
         )
 
-
         Text(
             text = "STUDY TIMER 101",
             fontSize = 20.sp,
@@ -89,22 +91,46 @@ fun StudyAppRoot(viewModel: StudyViewModel) {
                 .padding(top = if (isLandscape) 16.dp else 105.dp)
         )
 
-        if (uiState.selectedTimeMillis == null) {
-            TimeInputScreen(
-                uiState = uiState,
-                onInputChanged = { viewModel.onMinutesInputChanged(it) },
-                onConfirm = { viewModel.confirmAndStartTimer() },
-                onShowStats = { viewModel.setShowStatsDialog(true) },
-                onDismissStats = { viewModel.setShowStatsDialog(false) },
-                onClearHistory = { viewModel.clearHistory() }
-            )
-        } else {
-            TimerScreen(
-                uiState = uiState,
-                onToggleTimer = { viewModel.toggleTimer() },
-                onToggleMute = { viewModel.toggleMute() },
-                onBackToSetup = { viewModel.backToSetup() }
-            )
+        NavHost(
+            navController = navController,
+            startDestination = "time_input",
+            modifier = Modifier.fillMaxSize()
+        ) {
+            composable("time_input") {
+                TimeInputScreen(
+                    uiState = uiState,
+                    onInputChanged = { viewModel.onMinutesInputChanged(it) },
+                    onConfirm = {
+                        viewModel.confirmAndStartTimer()
+                        if (viewModel.uiState.value.selectedTimeMillis != null) {
+                            navController.navigate("timer") {
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                    onShowStats = { viewModel.setShowStatsDialog(true) },
+                    onDismissStats = { viewModel.setShowStatsDialog(false) },
+                    onClearHistory = { viewModel.clearHistory() }
+                )
+            }
+
+            composable("timer") {
+                TimerScreen(
+                    uiState = uiState,
+                    onToggleTimer = { viewModel.toggleTimer() },
+                    onToggleMute = { viewModel.toggleMute() },
+                    onBackToSetup = {
+                        viewModel.backToSetup()
+                        val popped = navController.popBackStack("time_input", inclusive = false)
+                        if (!popped) {
+                            navController.navigate("time_input") {
+                                popUpTo("timer") { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -161,7 +187,6 @@ fun TimeInputScreen(
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     if (isLandscape) {
-
         Row(
             modifier = Modifier
                 .padding(24.dp)
@@ -170,7 +195,6 @@ fun TimeInputScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -193,7 +217,7 @@ fun TimeInputScreen(
                             text = "\"${uiState.motivationalQuote}\"",
                             fontSize = 13.sp,
                             color = Color.White,
-                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                            fontStyle = FontStyle.Italic
                         )
                         if (uiState.quoteAuthor.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(4.dp))
@@ -207,7 +231,6 @@ fun TimeInputScreen(
                     }
                 }
             }
-
 
             Column(
                 modifier = Modifier
@@ -264,7 +287,6 @@ fun TimeInputScreen(
             }
         }
     } else {
-
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -291,7 +313,7 @@ fun TimeInputScreen(
                         text = "\"${uiState.motivationalQuote}\"",
                         fontSize = 14.sp,
                         color = Color.White,
-                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                        fontStyle = FontStyle.Italic
                     )
                     if (uiState.quoteAuthor.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
@@ -443,7 +465,6 @@ fun TimerScreen(
         }
     }
 
-
     LaunchedEffect(uiState.isTimerRunning) {
         if (uiState.isTimerRunning) {
             if (mediaPlayer == null || shuffledPlaylist.isEmpty()) {
@@ -462,7 +483,7 @@ fun TimerScreen(
     }
 
     val totalTime = uiState.selectedTimeMillis ?: 1L
-    val progressValue = uiState.currentTime / totalTime.toFloat()
+    val progressValue = if (totalTime > 0L) uiState.currentTime / totalTime.toFloat() else 0f
     val strokeWidth: Dp = 5.dp
 
     Box(
@@ -483,19 +504,19 @@ fun TimerScreen(
                     style = Stroke(strokeWidth.toPx(), cap = StrokeCap.Round)
                 )
 
-                val dynamicActiveColor = lerp(Color.Red, Color.Green, progressValue)
+                val dynamicActiveColor = lerp(Color.Red, Color.Green, progressValue.coerceIn(0f, 1f))
 
                 drawArc(
                     color = dynamicActiveColor,
                     startAngle = -215f,
-                    sweepAngle = 250f * progressValue,
+                    sweepAngle = 250f * progressValue.coerceIn(0f, 1f),
                     useCenter = false,
                     size = Size(size.width.toFloat(), size.height.toFloat()),
                     style = Stroke(strokeWidth.toPx(), cap = StrokeCap.Round)
                 )
 
                 val center = Offset(size.width / 2f, size.height / 2f)
-                val beta = (250f * progressValue + 145f) * (Math.PI / 180f).toFloat()
+                val beta = (250f * progressValue.coerceIn(0f, 1f) + 145f) * (Math.PI / 180f).toFloat()
                 val r = size.width / 2f
                 val a = cos(beta) * r
                 val b = sin(beta) * r
@@ -553,6 +574,7 @@ fun TimerScreen(
             onClick = {
                 mediaPlayer?.stop()
                 mediaPlayer?.release()
+                mediaPlayer = null
                 onBackToSetup()
             },
             modifier = Modifier
