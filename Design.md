@@ -7,12 +7,12 @@ Student ID: 2506252
 
 The application’s name is Study Timer 101, the must requirements that my app has are:
 
-* **Clean UI & Interactive Controls (Must 1 & 2):** Features a straightforward interface with clearly labeled buttons, a 1–60 minute numeric input field, and a **Total Study Time** button that opens an informational `AlertDialog`.
-* **Configuration Change Resilience (Must 3):** Retains the active screen and countdown state seamlessly across screen rotations.
-* **Dynamic Background List (Should 1):** Displays a slow-scrolling background `LazyColumn` populated with royalty-free study imagery sourced from Pexels and Vecteezy.
-* **MVVM Architecture (Should 2):** Uses `MainActivity`, `StudyViewModel`, and `StudyUiState` with `StateFlow` to separate UI rendering from business logic.
-* **Multi-Screen Navigation (Should 3):** Supports switching between `TimeInputScreen` and `TimerScreen`, each combining informational text and interactive controls.
-* **Live API Integration & Error Handling (Should 4 & 5):** Fetches motivational quotes from DummyJSON via Retrofit (`QuoteApiService`), falling back to local quotes when offline and validating inputs outside the 1–60 minute limit.
+* **Clean UI & Interactive Controls:** Features a straightforward interface with clearly labeled buttons, a 1–60 minute numeric input field, and a **Total Study Time** button that opens an informational `AlertDialog`.
+* **Configuration Change Resilience :** Retains the active screen and countdown state seamlessly across screen rotations.
+* **Dynamic Background List :** Displays a slow-scrolling background `LazyColumn` populated with royalty-free study imagery sourced from Pexels and Vecteezy.
+* **MVVM Architecture :** Uses `MainActivity`, `StudyViewModel`, and `StudyUiState` with `StateFlow` to separate UI rendering from business logic.
+* **Multi-Screen Navigation :** Supports switching between `TimeInputScreen` and `TimerScreen`, each combining informational text and interactive controls.
+* **Live API Integration & Error Handling :** Fetches motivational quotes from DummyJSON via Retrofit (`QuoteApiService`), falling back to local quotes when offline and validating inputs outside the 1–60 minute limit.
 
 
 8 UI/UX Design & The View Layer
